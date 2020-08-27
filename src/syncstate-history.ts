@@ -98,17 +98,23 @@ export const plugin = {
     const state = store.getState();
 
     switch (action.type) {
-      case 'PATCHES':
+      case 'PATCH':
         {
-          action.payload.forEach((patchObj: any) => {
-            const undoablePath = getUndoablePath(store, patchObj.patch.path);
+          if (
+            action.payload.patchType !== 'UNDO' &&
+            action.payload.patchType !== 'REDO'
+          ) {
+            const undoablePath = getUndoablePath(
+              store,
+              action.payload.patch.path
+            );
             if (undoablePath !== undefined) {
               store.dispatch({
                 type: 'ADD_UNDO_PATCH',
-                payload: { patchObj, undoablePath },
+                payload: { patchObj: action.payload, undoablePath },
               });
             }
-          });
+          }
         }
         break;
       case 'INSERT_UNDO_BREAKPOINT':
@@ -147,8 +153,8 @@ export const plugin = {
               },
             });
             store.dispatch({
-              type: 'SINGLE_PATCH',
-              payload: undoPatchObj.inversePatch,
+              type: 'PATCH',
+              payload: { patch: undoPatchObj.inversePatch, patchType: 'UNDO' },
             });
 
             store.dispatch({
@@ -224,8 +230,8 @@ export const plugin = {
             },
           });
           store.dispatch({
-            type: 'SINGLE_PATCH',
-            payload: undoPatchObj.inversePatch,
+            type: 'PATCH',
+            payload: { patch: undoPatchObj.inversePatch, patchType: 'UNDO' },
           });
 
           store.dispatch({
@@ -263,8 +269,8 @@ export const plugin = {
               },
             });
             store.dispatch({
-              type: 'SINGLE_PATCH',
-              payload: redoPatchObj.patch,
+              type: 'PATCH',
+              payload: { patch: redoPatchObj.patch, patchType: 'REDO' },
             });
 
             store.dispatch({
@@ -339,8 +345,8 @@ export const plugin = {
             },
           });
           store.dispatch({
-            type: 'SINGLE_PATCH',
-            payload: redoPatchObj.patch,
+            type: 'PATCH',
+            payload: { patch: redoPatchObj.patch, patchType: 'REDO' },
           });
 
           store.dispatch({
