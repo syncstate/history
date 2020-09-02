@@ -81,6 +81,7 @@ export const unwatchPath = (path: Array<string | number>) => {
 
 export const getUndoablePath = (
   store: SyncStateStore,
+  pluginName: string,
   path: Array<string | number>
 ) => {
   let undoablePath = '';
@@ -163,6 +164,7 @@ export const createPlugin = (conf: any = {}) => (store: SyncStateStore) => {
             ) {
               const undoablePath = getUndoablePath(
                 store,
+                pluginName,
                 action.payload.patch.path
               );
               if (undoablePath !== undefined) {
