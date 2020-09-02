@@ -85,7 +85,7 @@ export const getUndoablePath = (
 ) => {
   let undoablePath = '';
 
-  const undoablePaths = store.getStateAtPath('history', ['undoablePaths']);
+  const undoablePaths = store.getStateAtPath(pluginName, ['undoablePaths']);
 
   undoablePaths.forEach((p: string) => {
     if (path.join('/').startsWith(p) && path.join('/') !== p) {
@@ -141,14 +141,16 @@ function removeRedoPatch(setPathHistory: any, undoablePath: string) {
   });
 }
 
-export const plugin = (store: SyncStateStore) => {
+export const createPlugin = (conf: any = {}) => (store: SyncStateStore) => {
+  const pluginName = conf.name ? conf.name : 'history';
   return {
+    name: pluginName,
     middleware: (reduxStore: any) => (next: any) => (action: any) => {
-      const state = store.getState('history');
-      const [pathHistory, setPathHistory] = store.useSyncState('history', [
+      const state = store.getState(pluginName);
+      const [pathHistory, setPathHistory] = store.useSyncState(pluginName, [
         'paths',
       ]);
-      const [undoablePaths, setUndoablePaths] = store.useSyncState('history', [
+      const [undoablePaths, setUndoablePaths] = store.useSyncState(pluginName, [
         'undoablePaths',
       ]);
 
@@ -186,7 +188,7 @@ export const plugin = (store: SyncStateStore) => {
             }
 
             const lastUndoPatch = () => {
-              const patchArray = store.getStateAtPath('history', [
+              const patchArray = store.getStateAtPath(pluginName, [
                 'paths',
                 action.payload.path.join('/'),
                 'undo',
@@ -238,7 +240,7 @@ export const plugin = (store: SyncStateStore) => {
             }
 
             const lastUndoPatch = () => {
-              const patchArray = store.getStateAtPath('history', [
+              const patchArray = store.getStateAtPath(pluginName, [
                 'paths',
                 action.payload.path.join('/'),
                 'undo',
@@ -288,7 +290,7 @@ export const plugin = (store: SyncStateStore) => {
             }
 
             const lastRedoPatch = () => {
-              const patchArray = store.getStateAtPath('history', [
+              const patchArray = store.getStateAtPath(pluginName, [
                 'paths',
                 action.payload.path.join('/'),
                 'redo',
@@ -338,7 +340,7 @@ export const plugin = (store: SyncStateStore) => {
             }
 
             const lastRedoPatch = () => {
-              const patchArray = store.getStateAtPath('history', [
+              const patchArray = store.getStateAtPath(pluginName, [
                 'paths',
                 action.payload.path.join('/'),
                 'redo',
@@ -411,102 +413,102 @@ export const plugin = (store: SyncStateStore) => {
       // }
 
       // @ts-ignore
-      window['historyPatches'] = store.getState('history').paths;
+      window['historyPatches'] = store.getState(pluginName).paths;
 
       return result;
     },
-    reducer: {
-      name: 'history',
-      reducer: historyReducer,
-    },
+    // reducer: {
+    //   name: pluginName,
+    //   reducer: historyReducer,
+    // },
   };
 };
 
-export function historyReducer(
-  state: {
-    state: {
-      paths: {
-        [key: string]: {
-          undo: any[];
-          redo: any[];
-        };
-      };
-      undoablePaths: Array<string>;
-    };
-    patches: Array<any>;
-  } = {
-    state: {
-      paths: {
-        '': {
-          undo: [],
-          redo: [],
-        },
-      },
-      undoablePaths: [],
-    },
-    patches: [],
-  },
-  action: any
-) {
-  switch (action.type) {
-    // case 'ADD_UNDO_PATCH':
-    //   return produce(state, draftState => {
-    //     if (!draftState.state.paths[action.payload.undoablePath]) {
-    //       draftState.state.paths[action.payload.undoablePath] = {
-    //         undo: [],
-    //         redo: [],
-    //       };
-    //     }
-    //     draftState.state.paths[action.payload.undoablePath].undo.push(
-    //       action.payload.patchObj
-    //     );
-    //   });
+// export function historyReducer(
+//   state: {
+//     state: {
+//       paths: {
+//         [key: string]: {
+//           undo: any[];
+//           redo: any[];
+//         };
+//       };
+//       undoablePaths: Array<string>;
+//     };
+//     patches: Array<any>;
+//   } = {
+//     state: {
+//       paths: {
+//         '': {
+//           undo: [],
+//           redo: [],
+//         },
+//       },
+//       undoablePaths: [],
+//     },
+//     patches: [],
+//   },
+//   action: any
+// ) {
+//   switch (action.type) {
+//     // case 'ADD_UNDO_PATCH':
+//     //   return produce(state, draftState => {
+//     //     if (!draftState.state.paths[action.payload.undoablePath]) {
+//     //       draftState.state.paths[action.payload.undoablePath] = {
+//     //         undo: [],
+//     //         redo: [],
+//     //       };
+//     //     }
+//     //     draftState.state.paths[action.payload.undoablePath].undo.push(
+//     //       action.payload.patchObj
+//     //     );
+//     //   });
 
-    // case 'ADD_REDO_PATCH':
-    //   return produce(state, draftState => {
-    //     if (!draftState.state.paths[action.payload.undoablePath]) {
-    //       draftState.state.paths[action.payload.undoablePath] = {
-    //         undo: [],
-    //         redo: [],
-    //       };
-    //     }
-    //     draftState.state.paths[action.payload.undoablePath].redo.push(
-    //       action.payload.patchObj
-    //     );
-    //   });
-    // case 'POP_UNDO_PATCH':
-    //   return produce(state, draftState => {
-    //     if (draftState.state.paths[action.payload.undoablePath].undo) {
-    //       draftState.state.paths[action.payload.undoablePath].undo.pop();
-    //     }
-    //   });
-    // case 'POP_REDO_PATCH':
-    //   return produce(state, draftState => {
-    //     if (!draftState.state.paths[action.payload.undoablePath].redo) {
-    //       draftState.state.paths[action.payload.undoablePath].redo.pop();
-    //     }
-    //   });
+//     // case 'ADD_REDO_PATCH':
+//     //   return produce(state, draftState => {
+//     //     if (!draftState.state.paths[action.payload.undoablePath]) {
+//     //       draftState.state.paths[action.payload.undoablePath] = {
+//     //         undo: [],
+//     //         redo: [],
+//     //       };
+//     //     }
+//     //     draftState.state.paths[action.payload.undoablePath].redo.push(
+//     //       action.payload.patchObj
+//     //     );
+//     //   });
+//     // case 'POP_UNDO_PATCH':
+//     //   return produce(state, draftState => {
+//     //     if (draftState.state.paths[action.payload.undoablePath].undo) {
+//     //       draftState.state.paths[action.payload.undoablePath].undo.pop();
+//     //     }
+//     //   });
+//     // case 'POP_REDO_PATCH':
+//     //   return produce(state, draftState => {
+//     //     if (!draftState.state.paths[action.payload.undoablePath].redo) {
+//     //       draftState.state.paths[action.payload.undoablePath].redo.pop();
+//     //     }
+//     //   });
 
-    // case 'WATCH_PATH':
-    //   return produce(state, draftState => {
-    //     if (
-    //       !draftState.state.undoablePaths.includes(
-    //         action.payload.path.join('/')
-    //       )
-    //     ) {
-    //       draftState.state.undoablePaths.push(action.payload.path.join('/'));
-    //     }
-    //   });
-    // case 'UNWATCH_PATH':
-    //   return produce(state, draftState => {
-    //     draftState.state.undoablePaths.forEach((p, index) => {
-    //       if (p === action.payload.path.join('/')) {
-    //         draftState.state.undoablePaths.splice(index, 1);
-    //       }
-    //     });
-    //   });
+//     // case 'WATCH_PATH':
+//     //   return produce(state, draftState => {
+//     //     if (
+//     //       !draftState.state.undoablePaths.includes(
+//     //         action.payload.path.join('/')
+//     //       )
+//     //     ) {
+//     //       draftState.state.undoablePaths.push(action.payload.path.join('/'));
+//     //     }
+//     //   });
+//     // case 'UNWATCH_PATH':
+//     //   return produce(state, draftState => {
+//     //     draftState.state.undoablePaths.forEach((p, index) => {
+//     //       if (p === action.payload.path.join('/')) {
+//     //         draftState.state.undoablePaths.splice(index, 1);
+//     //       }
+//     //     });
+//     //   });
 
-    default:
-      return state;
-  }
-}
+//     default:
+//       return state;
+//   }
+// }
