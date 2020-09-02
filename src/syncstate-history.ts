@@ -146,6 +146,15 @@ export const createPlugin = (conf: any = {}) => (store: SyncStateStore) => {
   const pluginName = conf.name ? conf.name : 'history';
   return {
     name: pluginName,
+    initialState: {
+      paths: {
+        '': {
+          undo: [],
+          redo: [],
+        },
+      },
+      undoablePaths: [],
+    },
     middleware: (reduxStore: any) => (next: any) => (action: any) => {
       const state = store.getState(pluginName);
       const [pathHistory, setPathHistory] = store.useSyncState(pluginName, [
