@@ -1,4 +1,4 @@
-import { SyncStateStore } from '@syncstate/core';
+import { DocStore } from '@syncstate/core';
 
 export const undo = () => {
   return {
@@ -61,18 +61,18 @@ export const insertUndoBreakpoint = (path: Array<string | number> = []) => {
   };
 };
 
-export const watchPath = (path: Array<string | number>) => {
+export const enable = (path: Array<string | number>) => {
   return {
-    type: 'WATCH_PATH',
+    type: 'ENABLE_HISTORY',
     payload: {
       path,
     },
   };
 };
 
-export const unwatchPath = (path: Array<string | number>) => {
+export const disable = (path: Array<string | number>) => {
   return {
-    type: 'UNWATCH_PATH',
+    type: 'DISABLE_HISTORY',
     payload: {
       path,
     },
@@ -80,7 +80,7 @@ export const unwatchPath = (path: Array<string | number>) => {
 };
 
 export const getUndoablePath = (
-  store: SyncStateStore,
+  store: DocStore,
   pluginName: string,
   path: Array<string | number>
 ) => {
@@ -142,20 +142,24 @@ function removeRedoPatch(setPathHistory: any, undoablePath: string) {
   });
 }
 
-export const createPlugin = (conf: any = {}) => (store: SyncStateStore) => {
-  const pluginName = conf.name ? conf.name : 'history';
+export const createInitializer = (pluginName: string = 'history') => (
+  store: DocStore
+) => {
   return {
     name: pluginName,
     initialState: {
       paths: {
-        '': {
-          undo: [],
-          redo: [],
-        },
+        // '': {
+        //   undo: [],
+        //   redo: [],
+        // },
       },
       undoablePaths: [],
     },
     middleware: (reduxStore: any) => (next: any) => (action: any) => {
+      if (action.type === 'CREATE_SUBTREE') {
+        return next(action);
+      }
       const state = store.getState(pluginName);
       const [pathHistory, setPathHistory] = store.useSyncState(pluginName, [
         'paths',
@@ -393,7 +397,7 @@ export const createPlugin = (conf: any = {}) => (store: SyncStateStore) => {
           }
           break;
 
-        case 'WATCH_PATH':
+        case 'ENABLE_HISTORY':
           {
             setUndoablePaths((undoablePaths: Array<string>) => {
               if (!undoablePaths.includes(action.payload.path.join('/'))) {
@@ -402,7 +406,7 @@ export const createPlugin = (conf: any = {}) => (store: SyncStateStore) => {
             });
           }
           break;
-        case 'UNWATCH_PATH':
+        case 'DISABLE_HISTORY':
           {
             setUndoablePaths((undoablePaths: Array<string>) => {
               undoablePaths.forEach((p, index) => {
@@ -428,10 +432,6 @@ export const createPlugin = (conf: any = {}) => (store: SyncStateStore) => {
 
       return result;
     },
-    // reducer: {
-    //   name: pluginName,
-    //   reducer: historyReducer,
-    // },
   };
 };
 

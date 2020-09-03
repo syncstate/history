@@ -8,7 +8,7 @@
     "build": "parcel build index.html"
   },
   "dependencies": {
-    "@syncstate/core": "^0.4.2",
+    "@syncstate/core": "^0.4.3",
     "@syncstate/react": "^0.1.8",
     "lodash.get": "^4.4.2",
     "react-app-polyfill": "^1.0.0",
