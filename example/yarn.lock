@@ -938,10 +938,10 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@syncstate/core@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.npmjs.org/@syncstate/core/-/core-0.5.0.tgz#a78eb534e587fee0aa404a2fbaf10f13ef383b3e"
-  integrity sha512-ijfPmvIjNrlKkVrVeWNoToE37WES6UlUf/S/qGh/gPDPTMELipl8DPHUSA+cqVezD17GLkTX3MENPCdJ6YwTyA==
+"@syncstate/core@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.npmjs.org/@syncstate/core/-/core-0.5.1.tgz#059a0e0455bbe02d8c095da9b2d7c5fee310b869"
+  integrity sha512-luooFSRHeFofd+bqNuC9JYrE205O8cA8JJpIIZj8iXT4zLUX8/yq+NoX96s311cg8PhkQhuwtCwlM0VXHTsMhQ==
   dependencies:
     immer "^7.0.7"
     lodash.get "^4.4.2"
