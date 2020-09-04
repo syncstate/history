@@ -938,19 +938,19 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@syncstate/core@^0.4.3":
-  version "0.4.3"
-  resolved "https://registry.npmjs.org/@syncstate/core/-/core-0.4.3.tgz#06dc3d190fb49115330d1b4d10f7db99fd50f4fb"
-  integrity sha512-tiDh6Qynzzo4KuaAGvWO26z3FlV02mnsmGLo2APaLbzuR6DLPNPlPX4KWFSYdvhNx6Gw/L0FUTEdpy5wlkDMHw==
+"@syncstate/core@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.npmjs.org/@syncstate/core/-/core-0.5.0.tgz#a78eb534e587fee0aa404a2fbaf10f13ef383b3e"
+  integrity sha512-ijfPmvIjNrlKkVrVeWNoToE37WES6UlUf/S/qGh/gPDPTMELipl8DPHUSA+cqVezD17GLkTX3MENPCdJ6YwTyA==
   dependencies:
     immer "^7.0.7"
     lodash.get "^4.4.2"
     redux "^4.0.5"
 
-"@syncstate/react@^0.1.8":
-  version "0.1.8"
-  resolved "https://registry.npmjs.org/@syncstate/react/-/react-0.1.8.tgz#e57c595cc4ae57dbd3b50e86a6959661e93bf29a"
-  integrity sha512-FDh99jNrG79Kjyza1esxw5c4FW5pEdiUoca8X69tlcyObVuBK+uYLRjzlD6GdRszb2hk0O2TebA78kkVsOz2mA==
+"@syncstate/react@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.npmjs.org/@syncstate/react/-/react-0.2.0.tgz#8182650e7e02720897f2956650164a586f7467e0"
+  integrity sha512-2kiGdibsaNIbJ+yia8Cswp6m4cB6GN/o1SrqRRC79kiPjE96H7Lazc81hm17Jgq9rgsqBSZ7DNc9SAdLKL1amg==
   dependencies:
     immer "^7.0.7"
 
