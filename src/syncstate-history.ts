@@ -79,12 +79,12 @@ export const disable = (path: string) => {
   };
 };
 
-export const getUndoablePath = (
+export const getUndoablePaths = (
   store: DocStore,
   pluginName: string,
   path: string
 ) => {
-  let undoablePath = '';
+  let matchingUndoablePaths: Array<string> = [];
 
   const undoablePaths = store.getStateAtPath(pluginName, '/undoablePaths');
 
@@ -93,28 +93,34 @@ export const getUndoablePath = (
       path.startsWith(p.replaceAll('::', '/')) &&
       path !== p.replaceAll('::', '/')
     ) {
-      undoablePath = p.replaceAll('::', '/');
+      matchingUndoablePaths.push(p.replaceAll('::', '/'));
     }
   });
 
-  return undoablePath;
+  return matchingUndoablePaths;
 };
 
 function addUndoPatch(
   setPathHistory: any,
-  undoablePath: string,
+  undoablePaths: string | string[],
   change: { patch: any; inversePatch: any } | { type: 'breakpoint' }
 ) {
-  undoablePath = undoablePath.replaceAll('/', '::'); // interferes with JSON patch path
-  setPathHistory((pathHistory: any) => {
-    if (!pathHistory[undoablePath]) {
-      pathHistory[undoablePath] = {
-        undo: [],
-        redo: [],
-      };
-    }
+  if (!Array.isArray(undoablePaths)) {
+    undoablePaths = [undoablePaths];
+  }
 
-    pathHistory[undoablePath].undo.push(change);
+  undoablePaths.forEach(undoablePath => {
+    undoablePath = undoablePath.replaceAll('/', '::'); // interferes with JSON patch path
+    setPathHistory((pathHistory: any) => {
+      if (!pathHistory[undoablePath]) {
+        pathHistory[undoablePath] = {
+          undo: [],
+          redo: [],
+        };
+      }
+
+      pathHistory[undoablePath].undo.push(change);
+    });
   });
 }
 
@@ -149,17 +155,26 @@ function removeRedoPatch(setPathHistory: any, undoablePath: string) {
   });
 }
 
-function clearRedoPatches(setPathHistory: any, undoablePath: string) {
-  undoablePath = undoablePath.replaceAll('/', '::'); // interferes with JSON patch path
-  setPathHistory((pathHistory: any) => {
-    if (!pathHistory[undoablePath]) {
-      pathHistory[undoablePath] = {
-        undo: [],
-        redo: [],
-      };
-    } else {
-      pathHistory[undoablePath].redo = [];
-    }
+function clearRedoPatches(
+  setPathHistory: any,
+  undoablePaths: string | string[]
+) {
+  if (!Array.isArray(undoablePaths)) {
+    undoablePaths = [undoablePaths];
+  }
+
+  undoablePaths.forEach(undoablePath => {
+    undoablePath = undoablePath.replaceAll('/', '::'); // interferes with JSON patch path
+    setPathHistory((pathHistory: any) => {
+      if (!pathHistory[undoablePath]) {
+        pathHistory[undoablePath] = {
+          undo: [],
+          redo: [],
+        };
+      } else {
+        pathHistory[undoablePath].redo = [];
+      }
+    });
   });
 }
 
@@ -175,7 +190,7 @@ export const createInitializer = (pluginName: string = 'history') => (
           redo: [],
         },
       },
-      undoablePaths: [],
+      undoablePaths: [''],
     },
     middleware: (reduxStore: any) => (next: any) => (action: any) => {
       if (action.type === 'CREATE_SUBTREE') {
@@ -214,27 +229,26 @@ export const createInitializer = (pluginName: string = 'history') => (
               action.payload.patchType !== 'NO_RECORD' &&
               action.payload.subtree === 'doc'
             ) {
-              const undoablePath = getUndoablePath(
+              const undoablePaths = getUndoablePaths(
                 store,
                 pluginName,
                 action.payload.patch.path
               );
-              if (undoablePath !== undefined) {
-                addUndoPatch(setPathHistory, undoablePath, action.payload);
-                // const [pathHistory, setPathHistory2] = store.useSyncState(
-                //   pluginName,
-                //   '/paths'
-                // );
-                clearRedoPatches(setPathHistory, undoablePath);
-              }
+
+              addUndoPatch(setPathHistory, undoablePaths, action.payload);
+              clearRedoPatches(setPathHistory, undoablePaths);
             }
           }
           break;
         case 'INSERT_UNDO_BREAKPOINT':
           {
-            addUndoPatch(setPathHistory, action.payload.path, {
-              type: 'breakpoint',
-            });
+            addUndoPatch(
+              setPathHistory,
+              action.payload.path.replaceAll('/', '::'),
+              {
+                type: 'breakpoint',
+              }
+            );
           }
           break;
         case 'UNDO_TILL_BREAKPOINT':
