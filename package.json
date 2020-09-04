@@ -7,6 +7,10 @@
     "dist",
     "src"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/syncstate/history.git"
+  },
   "engines": {
     "node": ">=10"
   },
