@@ -124,11 +124,25 @@ export function TodoApp() {
             dispatch(history.undoPath('/todos'));
           }}
         >
-          Undo
+          Undo at path todos
         </button>
         <button
           onClick={() => {
             dispatch(history.redoPath('/todos'));
+          }}
+        >
+          Redo at path todos
+        </button>
+        <button
+          onClick={() => {
+            dispatch(history.undo());
+          }}
+        >
+          Undo
+        </button>
+        <button
+          onClick={() => {
+            dispatch(history.redo());
           }}
         >
           Redo
@@ -138,11 +152,25 @@ export function TodoApp() {
             dispatch(history.undoPathTillBreakpoint('/todos'));
           }}
         >
-          Undo till breakpoint
+          Undo path till breakpoint
         </button>
         <button
           onClick={() => {
             dispatch(history.redoPathTillBreakpoint('/todos'));
+          }}
+        >
+          Redo path till breakpoint
+        </button>
+        <button
+          onClick={() => {
+            dispatch(history.undoTillBreakpoint());
+          }}
+        >
+          Undo till breakpoint
+        </button>
+        <button
+          onClick={() => {
+            dispatch(history.redoTillBreakpoint());
           }}
         >
           Redo till breakpoint

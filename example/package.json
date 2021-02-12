@@ -8,8 +8,8 @@
     "build": "parcel build index.html"
   },
   "dependencies": {
-    "@syncstate/core": "^0.5.1",
-    "@syncstate/react": "^0.2.0",
+    "@syncstate/core": "^0.7.0-rc.7",
+    "@syncstate/react": "^0.7.0-rc.4",
     "lodash.get": "^4.4.2",
     "react-app-polyfill": "^1.0.0",
     "socket.io-client": "^2.3.0"

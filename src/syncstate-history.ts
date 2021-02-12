@@ -79,25 +79,37 @@ export const disable = (path: string) => {
   };
 };
 
-export const getUndoablePaths = (
+export const getUndoablePath = (
   store: DocStore,
   pluginName: string,
   path: string
-) => {
-  let matchingUndoablePaths: Array<string> = [];
+): string => {
+  const undoablePaths: Array<string> = store.getStateAtPath(
+    pluginName,
+    '/undoablePaths'
+  );
+  if (undoablePaths.map(p => p.replaceAll('::', '/')).includes(path)) {
+    return path; // exact match
+  } else {
+    const matchingUndoablePaths: Array<string> = [];
+    undoablePaths.forEach((p: string) => {
+      const normalizedPath = p.replaceAll('::', '/');
+      if (path.startsWith(normalizedPath)) {
+        matchingUndoablePaths.push(normalizedPath);
+      }
+    });
 
-  const undoablePaths = store.getStateAtPath(pluginName, '/undoablePaths');
-
-  undoablePaths.forEach((p: string) => {
-    if (
-      path.startsWith(p.replaceAll('::', '/')) &&
-      path !== p.replaceAll('::', '/')
+    let mostSpecificPath = matchingUndoablePaths.reduce(function(
+      accumulator,
+      currentValue
     ) {
-      matchingUndoablePaths.push(p.replaceAll('::', '/'));
-    }
-  });
-
-  return matchingUndoablePaths;
+      return currentValue.length > accumulator.length
+        ? currentValue
+        : accumulator; //  accumulator + currentValue
+    },
+    '');
+    return mostSpecificPath;
+  }
 };
 
 function addUndoPatch(
@@ -229,14 +241,14 @@ export const createInitializer = (pluginName: string = 'history') => (
               action.payload.patchType !== 'NO_RECORD' &&
               action.payload.subtree === 'doc'
             ) {
-              const undoablePaths = getUndoablePaths(
+              const undoablePath = getUndoablePath(
                 store,
                 pluginName,
                 action.payload.patch.path
               );
 
-              addUndoPatch(setPathHistory, undoablePaths, action.payload);
-              clearRedoPatches(setPathHistory, undoablePaths);
+              addUndoPatch(setPathHistory, undoablePath, action.payload);
+              clearRedoPatches(setPathHistory, undoablePath);
             }
           }
           break;
@@ -294,6 +306,12 @@ export const createInitializer = (pluginName: string = 'history') => (
           break;
         case 'UNDO':
           {
+            // console.log(
+            //   state.paths,
+            //   action.payload,
+            //   [action.payload.path.replaceAll('/', '::')],
+            //   'state.paths'
+            // );
             if (
               !state.paths[action.payload.path.replaceAll('/', '::')] ||
               !state.paths[action.payload.path.replaceAll('/', '::')].undo ||
