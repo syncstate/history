@@ -61,11 +61,12 @@ export const insertUndoBreakpoint = (path: string = '') => {
   };
 };
 
-export const enable = (path: string) => {
+export const enable = (path: string, ignore: Array<string> = []) => {
   return {
     type: 'ENABLE_HISTORY',
     payload: {
       path,
+      ignore,
     },
   };
 };
@@ -83,13 +84,15 @@ export const getUndoablePath = (
   store: DocStore,
   pluginName: string,
   path: string
-): string => {
+): string | null => {
   const undoablePaths: Array<string> = store.getStateAtPath(
     pluginName,
     '/undoablePaths'
   );
+  let normalizedUndoablePath;
+
   if (undoablePaths.map(p => p.replaceAll('::', '/')).includes(path)) {
-    return path; // exact match
+    normalizedUndoablePath = path; // exact match
   } else {
     const matchingUndoablePaths: Array<string> = [];
     undoablePaths.forEach((p: string) => {
@@ -108,8 +111,25 @@ export const getUndoablePath = (
         : accumulator; //  accumulator + currentValue
     },
     '');
-    return mostSpecificPath;
+    normalizedUndoablePath = mostSpecificPath;
   }
+
+  const pathHistory: any = store.getStateAtPath(
+    pluginName,
+    '/paths/' + normalizedUndoablePath.replaceAll('/', '::')
+  );
+
+  let ignore = false;
+  pathHistory?.ignoredPaths.forEach((ignoredPath: string) => {
+    if (path.startsWith(ignoredPath)) {
+      ignore = true;
+    }
+  });
+
+  if (ignore) {
+    return null;
+  }
+  return normalizedUndoablePath;
 };
 
 function addUndoPatch(
@@ -124,13 +144,6 @@ function addUndoPatch(
   undoablePaths.forEach(undoablePath => {
     undoablePath = undoablePath.replaceAll('/', '::'); // interferes with JSON patch path
     setPathHistory((pathHistory: any) => {
-      if (!pathHistory[undoablePath]) {
-        pathHistory[undoablePath] = {
-          undo: [],
-          redo: [],
-        };
-      }
-
       pathHistory[undoablePath].undo.push(change);
     });
   });
@@ -143,13 +156,6 @@ function addRedoPatch(
 ) {
   undoablePath = undoablePath.replaceAll('/', '::'); // interferes with JSON patch path
   setPathHistory((pathHistory: any) => {
-    if (!pathHistory[undoablePath]) {
-      pathHistory[undoablePath] = {
-        undo: [],
-        redo: [],
-      };
-    }
-
     pathHistory[undoablePath].redo.push(change);
   });
 }
@@ -178,14 +184,14 @@ function clearRedoPatches(
   undoablePaths.forEach(undoablePath => {
     undoablePath = undoablePath.replaceAll('/', '::'); // interferes with JSON patch path
     setPathHistory((pathHistory: any) => {
-      if (!pathHistory[undoablePath]) {
-        pathHistory[undoablePath] = {
-          undo: [],
-          redo: [],
-        };
-      } else {
-        pathHistory[undoablePath].redo = [];
-      }
+      // if (!pathHistory[undoablePath]) {
+      //   pathHistory[undoablePath] = {
+      //     undo: [],
+      //     redo: [],
+      //   };
+      // } else {
+      pathHistory[undoablePath].redo = [];
+      // }
     });
   });
 }
@@ -200,6 +206,7 @@ export const createInitializer = (pluginName: string = 'history') => (
         '': {
           undo: [],
           redo: [],
+          ignoredPaths: [],
         },
       },
       undoablePaths: [''],
@@ -247,8 +254,10 @@ export const createInitializer = (pluginName: string = 'history') => (
                 action.payload.patch.path
               );
 
-              addUndoPatch(setPathHistory, undoablePath, action.payload);
-              clearRedoPatches(setPathHistory, undoablePath);
+              if (undoablePath !== null) {
+                addUndoPatch(setPathHistory, undoablePath, action.payload);
+                clearRedoPatches(setPathHistory, undoablePath);
+              }
             }
           }
           break;
@@ -431,14 +440,28 @@ export const createInitializer = (pluginName: string = 'history') => (
 
         case 'ENABLE_HISTORY':
           {
+            const denormalizedPayloadPath = action.payload.path.replaceAll(
+              '/',
+              '::'
+            );
             setUndoablePaths((undoablePaths: Array<string>) => {
-              if (
-                !undoablePaths.includes(
-                  action.payload.path.replaceAll('/', '::')
-                )
-              ) {
-                undoablePaths.push(action.payload.path.replaceAll('/', '::'));
+              if (!undoablePaths.includes(denormalizedPayloadPath)) {
+                undoablePaths.push(denormalizedPayloadPath);
               }
+            });
+
+            setPathHistory((pathHistory: any) => {
+              if (!pathHistory[denormalizedPayloadPath]) {
+                pathHistory[denormalizedPayloadPath] = {
+                  undo: [],
+                  redo: [],
+                  ignoredPaths: [],
+                };
+              }
+
+              pathHistory[denormalizedPayloadPath].ignoredPaths.push(
+                ...action.payload.ignore
+              );
             });
           }
           break;

@@ -15,7 +15,7 @@ export function TodoApp() {
   const [input, setInput] = useState('');
 
   useEffect(() => {
-    dispatch(history.enable('/todos'));
+    dispatch(history.enable('/todos', ['/todos/0']));
   }, []);
 
   // console.log('todo app render');
