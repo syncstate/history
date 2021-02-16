@@ -61,7 +61,7 @@ export const insertUndoBreakpoint = (path: string = '') => {
   };
 };
 
-export const enable = (path: string, ignore: Array<string> = []) => {
+export const enable = (path: string, ignore: Array<string | RegExp> = []) => {
   return {
     type: 'ENABLE_HISTORY',
     payload: {
@@ -120,11 +120,17 @@ export const getUndoablePath = (
   );
 
   let ignore = false;
-  pathHistory?.ignoredPaths.forEach((ignoredPath: string) => {
-    if (path.startsWith(ignoredPath)) {
-      ignore = true;
+  for (const ignoredPath of pathHistory?.ignoredPaths) {
+    if (typeof ignoredPath === 'string') {
+      const ignoreRegExp = new RegExp(ignoredPath);
+      // console.log(ignoreRegExp, 'ignoreRegExp', path);
+
+      ignore = ignoreRegExp.test(path);
+      if (ignore) {
+        break; // break loop if found ignore
+      }
     }
-  });
+  }
 
   if (ignore) {
     return null;
