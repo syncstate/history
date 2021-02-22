@@ -269,13 +269,12 @@ export const createInitializer = (pluginName: string = 'history') => (
           break;
         case 'INSERT_UNDO_BREAKPOINT':
           {
-            addUndoPatch(
-              setPathHistory,
-              action.payload.path.replaceAll('/', '::'),
-              {
+            const denormalizedPath = action.payload.path.replaceAll('/', '::');
+            if (undoablePaths.includes(denormalizedPath)) {
+              addUndoPatch(setPathHistory, denormalizedPath, {
                 type: 'breakpoint',
-              }
-            );
+              });
+            }
           }
           break;
         case 'UNDO_TILL_BREAKPOINT':
