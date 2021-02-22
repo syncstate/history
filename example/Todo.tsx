@@ -39,6 +39,7 @@ export function TodoApp() {
     //   type: 'INSERT_UNDO_BREAKPOINT',
     //   payload: { path: ['todos', 0] },
     // });
+    dispatch(history.insertUndoBreakpoint('/todos'));
     setTodos(todos => {
       todos.push({
         caption: todoItem,

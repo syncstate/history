@@ -231,7 +231,7 @@ export const createInitializer = (pluginName: string = 'history') => (
         '/undoablePaths'
       );
 
-      const lastUndoPatch = () => {
+      const getLastUndoPatch = () => {
         const patchArray = store.getStateAtPath(
           pluginName,
           '/paths/' + action.payload.path.replaceAll('/', '::') + '/undo'
@@ -239,7 +239,7 @@ export const createInitializer = (pluginName: string = 'history') => (
         return patchArray ? patchArray[patchArray.length - 1] : undefined;
       };
 
-      const lastRedoPatch = () => {
+      const getLastRedoPatch = () => {
         const patchArray = store.getStateAtPath(
           pluginName,
           '/paths/' + action.payload.path.replaceAll('/', '::') + '/redo'
@@ -288,8 +288,13 @@ export const createInitializer = (pluginName: string = 'history') => (
               return;
             }
 
-            while (lastUndoPatch() && lastUndoPatch().type !== 'breakpoint') {
-              const undoPatchObj = lastUndoPatch();
+            const redoPatchesToBeAdded = [];
+
+            while (
+              getLastUndoPatch() &&
+              getLastUndoPatch().type !== 'breakpoint'
+            ) {
+              const undoPatchObj = getLastUndoPatch();
 
               removeUndoPatch(setPathHistory, action.payload.path);
 
@@ -302,20 +307,25 @@ export const createInitializer = (pluginName: string = 'history') => (
                 },
               });
 
-              addRedoPatch(setPathHistory, action.payload.path, undoPatchObj);
+              redoPatchesToBeAdded.push(undoPatchObj);
+
+              // addRedoPatch(setPathHistory, action.payload.path, undoPatchObj);
             }
 
             // checkpoint patch
 
-            if (lastUndoPatch() && lastUndoPatch().type === 'breakpoint') {
+            const undoPatchObj = getLastUndoPatch();
+
+            if (undoPatchObj && undoPatchObj.type === 'breakpoint') {
               removeUndoPatch(setPathHistory, action.payload.path);
 
-              addRedoPatch(
-                setPathHistory,
-                action.payload.path,
-                lastUndoPatch()
-              );
+              redoPatchesToBeAdded.unshift(undoPatchObj);
+              // addRedoPatch(setPathHistory, action.payload.path, undoPatchObj);
             }
+
+            redoPatchesToBeAdded.forEach(redoPatch => {
+              addRedoPatch(setPathHistory, action.payload.path, redoPatch);
+            });
           }
           break;
         case 'UNDO':
@@ -335,17 +345,18 @@ export const createInitializer = (pluginName: string = 'history') => (
               return;
             }
 
-            while (lastUndoPatch() && lastUndoPatch().type === 'breakpoint') {
+            while (
+              getLastUndoPatch() &&
+              getLastUndoPatch().type === 'breakpoint'
+            ) {
+              const lastUndoPatch = getLastUndoPatch();
+
               removeUndoPatch(setPathHistory, action.payload.path);
 
-              addRedoPatch(
-                setPathHistory,
-                action.payload.path,
-                lastUndoPatch()
-              );
+              addRedoPatch(setPathHistory, action.payload.path, lastUndoPatch);
             }
 
-            const undoPatchObj = lastUndoPatch();
+            const undoPatchObj = getLastUndoPatch();
             if (!undoPatchObj) {
               break;
             }
@@ -374,8 +385,13 @@ export const createInitializer = (pluginName: string = 'history') => (
               return;
             }
 
-            while (lastRedoPatch() && lastRedoPatch().type !== 'breakpoint') {
-              const redoPatchObj = lastRedoPatch();
+            const undoPatchesToBeAdded = [];
+
+            while (
+              getLastRedoPatch() &&
+              getLastRedoPatch().type !== 'breakpoint'
+            ) {
+              const redoPatchObj = getLastRedoPatch();
 
               removeRedoPatch(setPathHistory, action.payload.path);
 
@@ -388,18 +404,23 @@ export const createInitializer = (pluginName: string = 'history') => (
                 },
               });
 
-              addUndoPatch(setPathHistory, action.payload.path, redoPatchObj);
+              // addUndoPatch(setPathHistory, action.payload.path, redoPatchObj);
+
+              undoPatchesToBeAdded.push(redoPatchObj);
             }
 
-            if (lastRedoPatch() && lastRedoPatch().type === 'breakpoint') {
+            const redoPatchObj = getLastRedoPatch();
+
+            if (redoPatchObj && redoPatchObj.type === 'breakpoint') {
               removeRedoPatch(setPathHistory, action.payload.path);
 
-              addUndoPatch(
-                setPathHistory,
-                action.payload.path,
-                lastRedoPatch()
-              );
+              undoPatchesToBeAdded.unshift(redoPatchObj);
+              // addUndoPatch(setPathHistory, action.payload.path, redoPatchObj);
             }
+
+            undoPatchesToBeAdded.forEach(undoPatch => {
+              addUndoPatch(setPathHistory, action.payload.path, undoPatch);
+            });
           }
           break;
         case 'REDO':
@@ -413,17 +434,17 @@ export const createInitializer = (pluginName: string = 'history') => (
               return;
             }
 
-            while (lastRedoPatch() && lastRedoPatch().type === 'breakpoint') {
+            while (
+              getLastRedoPatch() &&
+              getLastRedoPatch().type === 'breakpoint'
+            ) {
+              const lastRedoPatch = getLastRedoPatch();
               removeRedoPatch(setPathHistory, action.payload.path);
 
-              addUndoPatch(
-                setPathHistory,
-                action.payload.path,
-                lastRedoPatch()
-              );
+              addUndoPatch(setPathHistory, action.payload.path, lastRedoPatch);
             }
 
-            const redoPatchObj = lastRedoPatch();
+            const redoPatchObj = getLastRedoPatch();
             if (!redoPatchObj) {
               break;
             }
